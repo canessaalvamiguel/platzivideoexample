@@ -1,0 +1,240 @@
+@import helper._
+
+@(movies: Seq[MovieTable#TableElementType])(implicit req: RequestHeader)
+
+@helper.javascriptRouter("myRoutes")(
+  routes.javascript.MovieController.deleteMovie,
+  routes.javascript.MovieController.getMovie
+)
+
+@main("Welcome to Play") {
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <h1>Welcome to Video Manager</h1>
+  <h2>Video List:</h2>
+  <table border="1">
+    <thead>
+    <tr>
+      <td>Id</td>
+      <td>Title</td>
+      <td>Year</td>
+      <td>Cover</td>
+      <td>Description</td>
+      <td>Duration</td>
+      <td>Content Rating</td>
+      <td>Source</td>
+      <td>Tag</td>
+      <td>Edit</td>
+      <td>Delete</td>
+    </tr>
+    </thead>
+    <tbody>
+    @for(movie <- movies){
+    <tr>
+      <td>@movie.id</td>
+      <td>@movie.title</td>
+      <td>@movie.year</td>
+      <td>@movie.cover</td>
+      <td>@movie.description</td>
+      <td>@movie.duration</td>
+      <td>@movie.contentRating</td>
+      <td>@movie.source</td>
+      <td>@movie.tags</td>
+      <td><a href="#" onclick="editMovie(@movie.id)">Edit</a></td>
+      <td><a href="#" onclick="deleteMovie(@movie.id)">Delete</a></td>
+    </tr>
+    }
+    </tbody>
+  </table>
+
+  <table>
+    <tr>
+      <td>
+        <table>
+          <tr><td colspan="2"><h2>Add new video</h2></td></tr>
+          <tr><td>Id:</td><td> <input type="text" id="id"/></td></tr>
+          <tr><td>Title:</td><td> <input type="text" id="title"/></td></tr>
+          <tr><td>Year:</td><td> <input type="text" id="year"/></td></tr>
+          <tr><td>Cover:</td><td> <input type="text" id="cover"/></td></tr>
+          <tr><td>Description:</td><td> <input type="text" id="description"/></td></tr>
+          <tr><td>Duration:</td><td> <input type="text" id="duration"/></td></tr>
+          <tr><td>ContentRating:</td><td> <input type="text" id="contentRating"/></td></tr>
+          <tr><td>Source:</td><td> <input type="text" id="source"/></td></tr>
+          <tr><td>Tags:</td><td> <input type="text" id="tags"/></td></tr>
+          <td><td colspan="2"><button onclick="ramdomData()">Random data</button><button onclick="submitData()">Submit</button></td></tr>
+        </table>
+      </td>
+      <td>
+        <table>
+          <tr><td colspan="2"><h2>Edit video</h2></td></tr>
+          <tr><td>Id:</td><td> <input type="text" id="id_ed"/></td></tr>
+          <tr><td>Title:</td><td> <input type="text" id="title_ed"/></td></tr>
+          <tr><td>Year:</td><td> <input type="text" id="year_ed"/></td></tr>
+          <tr><td>Cover:</td><td> <input type="text" id="cover_ed"/></td></tr>
+          <tr><td>Description:</td><td> <input type="text" id="description_ed"/></td></tr>
+          <tr><td>Duration:</td><td> <input type="text" id="duration_ed"/></td></tr>
+          <tr><td>ContentRating:</td><td> <input type="text" id="contentRating_ed"/></td></tr>
+          <tr><td>Source:</td><td> <input type="text" id="source_ed"/></td></tr>
+          <tr><td>Tags:</td><td> <input type="text" id="tags_ed"/></td></tr>
+          <td><td colspan="2"><button onclick="clearData()">Clear data</button><button onclick="submitEditData()">Submit</button></td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <script>
+    function submitData(){
+
+      var obj = {
+        id: $("#id").val(),
+        title: $("#title").val(),
+        year: parseInt($("#year").val(),10),
+        cover: $("#cover").val(),
+        description: $("#description").val(),
+        duration: parseFloat($("#duration").val()),
+        contentRating: $("#contentRating").val(),
+        source: $("#source").val(),
+        tags: $("#tags").val()
+      };
+
+      $.ajax({
+        url: "@CSRF(routes.MovieController.createMovie())",
+        data: JSON.stringify(obj),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        type: 'POST',
+        success: function(res) {
+          location.reload();
+        },
+        error: function(xhr){
+          alert("Error: "+xhr.responseText);
+        }
+      });
+    }
+
+    function deleteMovie(id){
+      $.ajaxSetup({
+          beforeSend: function(xhr) {
+              xhr.setRequestHeader('Csrf-Token','@helper.CSRF.getToken.value');
+          }
+      });
+
+      $.ajax({
+          url: "/api/movie/"+id,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          type: 'DELETE',
+          success: function(res) {
+            location.reload();
+          },
+          error: function(xhr){
+            alert("Error: "+xhr.responseText);
+          }
+      });
+    }
+
+    function editMovie(id){
+      copyDataToTableCopy(id);
+    }
+
+    function copyDataToTableCopy(id){
+      $.ajaxSetup({
+          beforeSend: function(xhr) {
+              xhr.setRequestHeader('Csrf-Token','@helper.CSRF.getToken.value');
+          }
+      });
+
+      $.ajax({
+          url: "/api/movie/"+id,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          type: 'GET',
+          success: function(res) {
+            setEditTableData(res);
+          },
+          error: function(xhr){
+            alert("Error: "+xhr.responseText);
+          }
+      });
+    }
+
+    function submitEditData(){
+      $.ajaxSetup({
+          beforeSend: function(xhr) {
+              xhr.setRequestHeader('Csrf-Token','@helper.CSRF.getToken.value');
+          }
+      });
+
+      var id = $("#id_ed").val();
+
+      var obj = {
+        id: $("#id_ed").val(),
+        title: $("#title_ed").val(),
+        year: parseInt($("#year_ed").val(),10),
+        cover: $("#cover_ed").val(),
+        description: $("#description_ed").val(),
+        duration: parseFloat($("#duration_ed").val()),
+        contentRating: $("#contentRating_ed").val(),
+        source: $("#source_ed").val(),
+        tags: $("#tags_ed").val()
+      };
+
+      $.ajax({
+          url: "/api/movie/"+id,
+          data: JSON.stringify(obj),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          type: 'PATCH',
+          success: function(res) {
+            if(res.data === "null"){
+              alert(res.message);
+            }else{
+              location.reload();
+            }
+          },
+          error: function(xhr){
+            alert("Error: "+xhr.responseText);
+          }
+      });
+    }
+
+    function setEditTableData(res){
+        $("#id_ed").val(res.data.id);
+        $("#title_ed").val(res.data.title);
+        $("#year_ed").val(res.data.year);
+        $("#cover_ed").val(res.data.cover);
+        $("#description_ed").val(res.data.description);
+        $("#duration_ed").val(res.data.duration);
+        $("#contentRating_ed").val(res.data.contentRating);
+        $("#source_ed").val(res.data.source);
+        $("#tags_ed").val(res.data.tags);
+    }
+
+    function clearData(){
+        $("#id_ed").val("");
+        $("#title_ed").val("");
+        $("#year_ed").val("");
+        $("#cover_ed").val("");
+        $("#description_ed").val("");
+        $("#duration_ed").val("");
+        $("#contentRating_ed").val("");
+        $("#source_ed").val("");
+        $("#tags_ed").val("");
+    }
+
+    function ramdomData(){
+      $("#id").val(Math.floor(Math.random() * 100001));
+      $("#title").val("title"+Math.floor(Math.random() * 101));
+      $("#year").val(Math.floor(Math.random() * 10000));
+      $("#cover").val("cover"+Math.floor(Math.random() * 101));
+      $("#description").val("desc"+Math.floor(Math.random() * 101));
+      $("#duration").val(Math.floor(Math.random() * 101));
+      $("#contentRating").val("ratimg"+Math.floor(Math.random() * 101));
+      $("#source").val("source"+Math.floor(Math.random() * 101));
+      $("#tags").val("tag"+Math.floor(Math.random() * 101));
+    }
+  </script>
+}
