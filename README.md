@@ -12,5 +12,11 @@ sbt compile stage
 heroku create -s cedar
 git push heroku master
 ```
+## Custom host
+When you get the host for your Heroku app, please add this to:
+
+```
+play.filters.hosts on conf/application.conf
+```
 
 Thanks
